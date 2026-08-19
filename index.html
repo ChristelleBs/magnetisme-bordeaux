@@ -214,7 +214,11 @@
   :focus-visible{outline:3px solid var(--blue);outline-offset:3px;border-radius:4px;}
 
   /* ---------- HEADER ---------- */
-  #site-header{position:sticky;top:0;z-index:100;background:rgba(251,249,245,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
+  #site-header{position:sticky;top:0;z-index:100;border-bottom:1px solid var(--line);}
+  /* Le flou est porté par un pseudo-élément : appliqué au header lui-même,
+     backdrop-filter en ferait le bloc conteneur du menu mobile en position:fixed,
+     qui se retrouvait alors écrasé dans la hauteur du header. */
+  #site-header::before{content:"";position:absolute;inset:0;background:rgba(251,249,245,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);z-index:-1;pointer-events:none;}
   #site-header.is-scrolled{box-shadow:0 4px 18px -12px rgba(42,34,36,.4);}
   .nav-wrap{max-width:var(--maxw);margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:24px;}
   .logo{font-family:var(--ff-head);font-size:1.12rem;font-weight:600;color:var(--plum);text-decoration:none;line-height:1.15;flex:none;padding:6px 0;}
@@ -233,7 +237,16 @@
     .nav-wrap{gap:16px;padding:12px 18px;}
   }
   .menu-toggle{display:none;background:none;border:0;padding:11px;cursor:pointer;flex:none;}
-  .menu-toggle span{display:block;width:22px;height:2px;background:var(--plum);margin:4px 0;border-radius:2px;}
+  .menu-toggle span{display:block;width:22px;height:2px;background:var(--plum);margin:4px 0;border-radius:2px;transition:transform .22s ease,opacity .16s ease;}
+  /* 6px = écart réel entre les centres des trois barres (2px de haut, 4px de marge fusionnée) */
+  .menu-toggle.is-open span:nth-child(1){transform:translateY(6px) rotate(45deg);}
+  .menu-toggle.is-open span:nth-child(2){opacity:0;}
+  .menu-toggle.is-open span:nth-child(3){transform:translateY(-6px) rotate(-45deg);}
+  /* Le voile passe au-dessus du bandeau RGPD (z-index 150), le header au-dessus du voile */
+  .nav-backdrop{position:fixed;inset:0;background:rgba(42,34,36,.45);opacity:0;visibility:hidden;transition:opacity .22s ease,visibility 0s .22s;z-index:160;border:0;padding:0;cursor:pointer;}
+  body.nav-open #site-header{z-index:200;}
+  body.nav-open .nav-backdrop{opacity:1;visibility:visible;transition:opacity .22s ease;}
+  @media (prefers-reduced-motion:reduce){.menu-toggle span,.nav-backdrop{transition:none;}}
 
   /* ---------- ZONE PHOTO EN PARALLAXE ---------- */
   .zone-photo{position:relative;overflow:hidden;background:var(--bg);}
@@ -471,11 +484,11 @@
   }
   @media (max-width:860px){
     section{padding:56px 0;}
-    #site-nav{position:fixed;inset:0 0 0 auto;width:min(78%,320px);background:var(--bg);padding:88px 28px 28px;opacity:0;visibility:hidden;transform:translateY(-10px);transition:opacity .22s ease,transform .22s ease,visibility 0s .22s;box-shadow:-10px 0 30px -20px rgba(42,34,36,.6);overflow-y:auto;}
+    #site-nav{position:fixed;inset:0 0 0 auto;width:min(78%,320px);background:var(--bg);padding:88px 28px calc(28px + env(safe-area-inset-bottom,0px));opacity:0;visibility:hidden;transform:translateX(12px);transition:opacity .22s ease,transform .22s ease,visibility 0s .22s;box-shadow:-10px 0 30px -20px rgba(42,34,36,.6);overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:2;}
     #site-nav.is-open{opacity:1;visibility:visible;transform:none;transition:opacity .22s ease,transform .22s ease;}
     #site-nav ul{flex-direction:column;gap:4px;}
     .nav-link{display:block;padding:12px 0;border-bottom:1px solid var(--line);font-size:1rem;}
-    .menu-toggle{display:block;order:3;margin-right:-6px;}
+    .menu-toggle{display:block;order:3;margin-right:-6px;position:relative;z-index:3;}
     .nav-wrap{gap:10px;padding:10px 16px;}
     .logo{font-size:1rem;}
     .logo small{font-size:.58rem;letter-spacing:.09em;}
@@ -936,16 +949,48 @@
   // Menu mobile
   var toggle = document.getElementById('menuToggle');
   var nav = document.getElementById('site-nav');
-  toggle.addEventListener('click', function(){
-    var open = nav.classList.toggle('is-open');
+
+  // Voile cliquable derrière le panneau : fermer en touchant à côté
+  var backdrop = document.createElement('button');
+  backdrop.className = 'nav-backdrop';
+  backdrop.setAttribute('type','button');
+  backdrop.setAttribute('tabindex','-1');
+  backdrop.setAttribute('aria-label','Fermer le menu');
+  document.body.appendChild(backdrop);
+
+  function setMenu(open){
+    nav.classList.toggle('is-open', open);
+    toggle.classList.toggle('is-open', open);
+    document.body.classList.toggle('nav-open', open);
     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     toggle.setAttribute('aria-label', open ? 'Fermer le menu' : 'Ouvrir le menu');
+    // Blocage du défilement de l'arrière-plan. On n'utilise pas
+    // position:fixed sur le body : cela décalerait le header sticky
+    // hors de l'écran et le bouton de fermeture deviendrait invisible.
+    document.documentElement.style.overflow = open ? 'hidden' : '';
+  }
+  // Sur iOS, overflow:hidden ne suffit pas : on bloque aussi le geste sur le voile
+  backdrop.addEventListener('touchmove', function(e){ e.preventDefault(); }, {passive:false});
+
+  toggle.addEventListener('click', function(){
+    setMenu(!nav.classList.contains('is-open'));
+  });
+  backdrop.addEventListener('click', function(){
+    setMenu(false);
+    toggle.focus();
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && nav.classList.contains('is-open')){
+      setMenu(false);
+      toggle.focus();
+    }
   });
   nav.querySelectorAll('a').forEach(function(a){
-    a.addEventListener('click', function(){
-      nav.classList.remove('is-open');
-      toggle.setAttribute('aria-expanded','false');
-    });
+    a.addEventListener('click', function(){ setMenu(false); });
+  });
+  // Retour au menu horizontal si l'écran s'élargit (rotation de l'appareil)
+  window.matchMedia('(min-width:861px)').addEventListener('change', function(e){
+    if(e.matches) setMenu(false);
   });
 
   if('IntersectionObserver' in window){
