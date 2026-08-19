@@ -278,7 +278,7 @@
   .hero h1{color:var(--white);margin-bottom:.26em;font-size:clamp(2.2rem,4.4vw,3.25rem);text-shadow:0 1px 24px rgba(42,22,27,.35);}
   .hero .lead{font-size:1.16rem;color:#e6d9dc;max-width:34em;margin-bottom:2.2em;}
   .hero .tel-note{color:#c9b2b9;font-size:.9rem;max-width:36em;margin-top:20px;}
-  .tel-block{display:inline-flex;align-items:center;gap:16px;background:var(--white);border:2px solid var(--plum);border-radius:var(--radius);padding:18px 30px;text-decoration:none;transition:transform .18s ease,background .18s ease;}
+  .tel-block{display:inline-flex;align-items:center;justify-content:center;gap:16px;background:var(--white);border:2px solid var(--plum);border-radius:var(--radius);padding:18px 30px;text-decoration:none;transition:transform .18s ease,background .18s ease;}
   .tel-block:hover{background:#fffdf7;}
   .tel-block:hover{transform:translateY(-2px);}
   .tel-block svg{width:26px;height:26px;color:var(--gold-dark);flex:none;}
@@ -436,9 +436,13 @@
   .foot-bottom{margin-top:40px;padding-top:20px;border-top:1px solid rgba(255,255,255,.14);display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between;font-size:.82rem;color:#c5aeb5;}
 
   /* ---------- STICKY MOBILE ---------- */
-  .sticky-tel{position:fixed;left:0;right:0;bottom:0;z-index:120;background:var(--gold);display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;text-decoration:none;color:var(--plum);font-weight:700;font-size:.98rem;transform:translateY(110%);transition:transform .25s ease;box-shadow:0 -6px 20px -10px rgba(42,34,36,.5);}
+  .sticky-tel{position:fixed;left:0;right:0;bottom:0;z-index:120;background:var(--gold);display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));text-decoration:none;color:var(--plum);font-weight:700;text-align:center;transform:translateY(110%);transition:transform .25s ease;box-shadow:0 -6px 20px -10px rgba(42,34,36,.5);}
   .sticky-tel.is-visible{transform:translateY(0);}
-  .sticky-tel svg{width:19px;height:19px;}
+  .sticky-tel svg{width:22px;height:22px;flex:none;}
+  /* Libellé et numéro sur deux lignes, l'ensemble centré */
+  .sticky-txt{display:flex;flex-direction:column;align-items:center;line-height:1.22;}
+  .sticky-label{font-size:.86rem;letter-spacing:.01em;}
+  .sticky-num{font-size:1.12rem;letter-spacing:.02em;white-space:nowrap;}
   @media (min-width:861px){.sticky-tel{display:none;}}
 
   /* ---------- MODALS ---------- */
@@ -495,7 +499,7 @@
     .header-tel{margin-left:auto;padding:9px 14px;font-size:.92rem;}
     .header-tel .tel-txt{display:none;}
     .header-tel .tel-short{display:inline;}
-    body{padding-bottom:56px;}
+    body{padding-bottom:calc(74px + env(safe-area-inset-bottom,0px));}
   }
   @media (min-width:861px){ .header-tel .tel-short{display:none;} }
   @media (max-width:620px){
@@ -885,7 +889,10 @@
 
 <a href="tel:+33639981234" class="sticky-tel" id="stickyTel">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.68 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.32 1.85.55 2.81.68A2 2 0 0 1 22 16.92z"/></svg>
-  Prendre rendez-vous · 06 39 98 12 34
+  <span class="sticky-txt">
+    <span class="sticky-label">Prendre rendez-vous</span>
+    <span class="sticky-num">06 39 98 12 34</span>
+  </span>
 </a>
 
 <div class="rgpd" id="rgpd" role="dialog" aria-label="Gestion des cookies">
